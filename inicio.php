@@ -19,9 +19,15 @@ if (isset($_POST['agregar_carrito'])) {
     exit();
 }
 
-// 3. CONSULTA DE PRODUCTOS
-$query = "SELECT * FROM producto";
-$resultado = mysqli_query($conexion, $query);
+// 3. CONSULTA DE PRODUCTOS CON PDO
+try {
+    $query = "SELECT * FROM producto";
+    $stmt = $conexion->query($query); // PDO ejecuta la consulta directamente
+    $productos = $stmt->fetchAll();   // Traemos todos los productos de un solo golpe
+} catch (PDOException $e) {
+    error_log("Error al consultar productos: " . $e->getMessage());
+    $productos = array(); // Evitamos que el HTML falle inicializando un array vacío
+}
 ?>
 
 <!DOCTYPE html>
@@ -38,7 +44,7 @@ $resultado = mysqli_query($conexion, $query);
             <img src="logo.png.png" alt="Logo KSS" class="header-logo">
         </div>
 
-        <h1>Bienvenido, <span class="user-name"><?php echo $_SESSION['nombre_usuario']; ?></span> 👋</h1>
+        <h1>Bienvenido, <span class="user-name"><?php echo htmlspecialchars($_SESSION['nombre_usuario']); ?></span> 👋</h1>
 
         <div class="carrito-wrapper">
             <a href="ver_carrito.php" class="carrito-contador">
@@ -53,21 +59,24 @@ $resultado = mysqli_query($conexion, $query);
     </header>
 
     <main class="productos-grid">
-        <?php while ($row = mysqli_fetch_assoc($resultado)) { ?>
+        <?php 
+        // Cambiamos el 'while' antiguo por un 'foreach' moderno de PDO
+        if (!empty($productos)) {
+            foreach ($productos as $row) { 
+        ?>
             <article class="producto-card">
                 <div class="info-superior">
                     <div class="producto-imagen-wrapper">
                         <?php 
-                        // IMPORTANTE: Usamos 'image' porque así aparece en tu phpMyAdmin
                         $nombre_foto = !empty($row['image']) ? $row['image'] : 'logo.png.png'; 
                         ?>
                         <img src="<?php echo $nombre_foto; ?>" 
-                             alt="<?php echo $row['nombre_producto']; ?>" 
+                             alt="<?php echo htmlspecialchars($row['nombre_producto']); ?>" 
                              class="producto-img-catalogo">
                     </div>
                     
-                    <h3><?php echo $row['nombre_producto']; ?></h3>
-                    <p><?php echo $row['descripcion']; ?></p>
+                    <h3><?php echo htmlspecialchars($row['nombre_producto']); ?></h3>
+                    <p><?php echo htmlspecialchars($row['descripcion']); ?></p>
                 </div>
                 
                 <div class="info-inferior">
@@ -80,7 +89,12 @@ $resultado = mysqli_query($conexion, $query);
                     </form>
                 </div>
             </article>
-        <?php } ?>
+        <?php 
+            } 
+        } else {
+            echo "<p class='error-mensaje'>No hay productos disponibles en este momento.</p>";
+        }
+        ?>
     </main>
 
 </body>
