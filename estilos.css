@@ -1,0 +1,168 @@
+/* IMPORTACIÓN DE FUENTE MODERNA */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #0f0f0f;
+    color: #ffffff;
+    margin: 0;
+    min-height: 100vh;
+}
+
+/* --- LOGO (UNIFICADO PARA TODAS LAS PÁGINAS) --- */
+.logo-wrapper, .logo-container {
+    display: flex !important;
+    justify-content: center !important;
+    margin-bottom: 15px !important;
+    width: 100%;
+}
+
+.login-logo, .header-logo, .main-logo {
+    width: 130px !important; 
+    max-width: 130px !important;
+    height: auto !important;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    display: block !important;
+}
+
+/* --- CABECERA DE LA TIENDA (INICIO.PHP) --- */
+.header-tienda {
+    text-align: center;
+    padding: 30px 20px;
+    background-color: #151515;
+    border-bottom: 2px solid #d4af37;
+    margin-bottom: 30px;
+}
+
+/* Estilos para la cabecera de la tienda */
+.header-tienda {
+    text-align: center;
+    padding: 30px;
+    background-color: #151515;
+    border-bottom: 2px solid #d4af37;
+}
+
+.user-name {
+    color: #d4af37 !important; /* El dorado para el nombre */
+}
+
+.carrito-wrapper {
+    margin: 15px 0;
+}
+
+.carrito-contador {
+    background-color: #252525;
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: 1px solid #d4af37;
+    color: white;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-salir {
+    color: #ff4b4b;
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+/* --- GRID DE PRODUCTOS (CUADRICULA) --- */
+.productos-grid {
+    display: grid;
+    /* Esto crea columnas automáticas que se ajustan solas al ancho de la pantalla */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px; /* Espacio entre cada producto */
+    padding: 20px;
+    max-width: 1200px; /* Evita que los productos se estiren demasiado en pantallas grandes */
+    margin: 0 auto; /* Centra la cuadrícula en la pantalla */
+    width: 100%;
+}
+
+/* Ajuste para las tarjetas de producto */
+.producto-card {
+    background-color: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 18px;
+    padding: 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Mantiene los botones alineados abajo */
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.producto-card:hover {
+    border-color: #d4af37;
+    transform: translateY(-5px);
+}
+
+/* --- LOGIN Y REGISTRO --- */
+.flex-center {
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; padding: 20px;
+}
+
+.login-container {
+    background-color: #1a1a1a; padding: 30px;
+    border-radius: 20px; border: 1px solid #2a2a2a;
+    width: 100%; max-width: 400px; text-align: center;
+}
+
+input {
+    width: 100%; padding: 12px; margin-bottom: 15px;
+    border: 1px solid #333; border-radius: 8px;
+    background-color: #252525; color: white;
+}
+
+button {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #d4af37 0%, #9a782a 100%);
+    border: none; border-radius: 8px; font-weight: bold; cursor: pointer;
+}
+
+/* Estilo para las imágenes del catálogo */
+.producto-imagen-wrapper {
+    width: 100%;
+    height: 180px; /* Altura fija para que todos los cuadros midan igual */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.producto-img-catalogo {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* Ajusta la imagen sin deformarla */
+    border-radius: 10px;
+    transition: transform 0.3s ease;
+}
+
+.producto-card:hover .producto-img-catalogo {
+    transform: scale(1.1); /* Efecto de zoom suave al pasar el mouse */
+}
+
+/* --- ESTILO DE PRECIOS --- */
+.precio {
+    color: #d4af37 !important; 
+    font-size: 1.8rem !important; 
+    font-weight: 700 !important; 
+    margin: 15px 0 !important;
+    display: block !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5); 
+}
+
+.btn-carrito {
+    background: linear-gradient(135deg, #d4af37 0%, #9a782a 100%) !important;
+    color: #121212 !important;
+    border-radius: 25px !important; /* Botón más redondeado */
+    padding: 12px !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
