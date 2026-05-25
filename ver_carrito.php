@@ -4,12 +4,33 @@ include("conexion.php");
 
 $carrito_vacio = true;
 $total = 0;
+$productos_carrito = array();
 
 if (isset($_SESSION['carrito']) && count($_SESSION['carrito']) > 0) {
     $carrito_vacio = false;
-    $ids = implode(',', $_SESSION['carrito']);
-    $query = "SELECT * FROM producto WHERE id_producto IN ($ids)";
-    $resultado = mysqli_query($conexion, $query);
+    
+    // 1. Limpiamos duplicados o valores vacíos por seguridad
+    $lista_ids = array_filter($_SESSION['carrito']); 
+    
+    if (!empty($lista_ids)) {
+        try {
+            // 2. Creamos una cadena con signos de interrogación según la cantidad de IDs. Ej: (?, ?, ?)
+            $interrogaciones = str_repeat('?,', count($lista_ids) - 1) . '?';
+            
+            // 3. Preparamos la consulta SQL dinámica
+            $query = "SELECT * FROM producto WHERE id_producto IN ($interrogaciones)";
+            $stmt = $conexion->prepare($query);
+            
+            // 4. Ejecutamos pasando el arreglo directo (PDO mapea cada ID a un signo '?')
+            $stmt->execute(array_values($lista_ids));
+            
+            // 5. Capturamos todos los productos
+            $productos_carrito = $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error al cargar el carrito: " . $e->getMessage());
+            $carrito_vacio = true; // Si falla la BD, protegemos el flujo asumiendo vacío
+        }
+    }
 }
 ?>
 
@@ -28,7 +49,7 @@ if (isset($_SESSION['carrito']) && count($_SESSION['carrito']) > 0) {
         </header>
 
         <div class="login-container carrito-ancho">
-            <?php if ($carrito_vacio): ?>
+            <?php if ($carrito_vacio || empty($productos_carrito)): ?>
                 <p>Tu carrito está vacío.</p>
             <?php else: ?>
                 <table class="tabla-carrito">
@@ -40,11 +61,13 @@ if (isset($_SESSION['carrito']) && count($_SESSION['carrito']) > 0) {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php while ($row = mysqli_fetch_assoc($resultado)): 
+                        <?php 
+                        // Usamos un ciclo foreach moderno para iterar sobre los productos traídos por PDO
+                        foreach ($productos_carrito as $row): 
                             $total += $row['precio'];
                         ?>
                             <tr>
-                                <td><?php echo $row['nombre_producto']; ?></td>
+                                <td><?php echo htmlspecialchars($row['nombre_producto']); ?></td>
                                 <td>$<?php echo number_format($row['precio'], 0, ',', '.'); ?></td>
                                 <td>
                                     <form method="POST" action="eliminar_item.php">
@@ -53,7 +76,7 @@ if (isset($_SESSION['carrito']) && count($_SESSION['carrito']) > 0) {
                                     </form>
                                 </td>
                             </tr>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
                 
