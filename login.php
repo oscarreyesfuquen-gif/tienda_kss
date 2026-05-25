@@ -29,6 +29,7 @@ if (isset($_POST['ingresar'])) {
             // 5. Validamos la contraseña usando el hash de la base de datos
             if (password_verify($password, $usuario['password_hash'])) {
                 $_SESSION['nombre_usuario'] = $usuario['nombre'];
+                $_SESSION['id_rol'] = $usuario['id_rol'];
                 header("Location: inicio.php");
                 exit();
             } else {
