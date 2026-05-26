@@ -2,14 +2,18 @@
 session_start();
 include("conexion.php");
 
-// 1. SEGURIDAD: Si no hay sesión, al login
-if (!isset($_SESSION['nombre_usuario'])) {
-    header("Location: login.php");
-    exit();
-}
-
-// 2. LÓGICA DEL CARRITO
+// 1. LÓGICA DEL CARRITO CON CONTROL DE ACCESO
 if (isset($_POST['agregar_carrito'])) {
+    // Si el usuario NO ha iniciado sesión, lo frenamos de inmediato
+    if (!isset($_SESSION['nombre_usuario'])) {
+        echo "<script>
+                alert('🛒 ¡Para añadir productos al carrito debes iniciar sesión primero!');
+                window.location.href='login.php';
+              </script>";
+        exit();
+    }
+    
+    // Si la sesión existe, procedemos a guardar en el carrito
     $id_p = $_POST['id_producto'];
     if (!isset($_SESSION['carrito'])) {
         $_SESSION['carrito'] = array();
@@ -19,7 +23,7 @@ if (isset($_POST['agregar_carrito'])) {
     exit();
 }
 
-// 3. CONSULTA DE PRODUCTOS CON PDO
+// 2. CONSULTA DE PRODUCTOS CON PDO
 try {
     $query = "SELECT * FROM producto";
     $stmt = $conexion->query($query); 
@@ -44,7 +48,7 @@ try {
             <img src="logo.png.png" alt="Logo KSS" class="header-logo">
         </div>
 
-        <h1>Bienvenido, <span class="user-name"><?php echo htmlspecialchars($_SESSION['nombre_usuario']); ?></span> 👋</h1>
+        <h1>Bienvenido, <span class="user-name"><?php echo isset($_SESSION['nombre_usuario']) ? htmlspecialchars($_SESSION['nombre_usuario']) : 'Invitado 👤'; ?></span></h1>
 
         <div class="carrito-wrapper">
             <?php if (isset($_SESSION['id_rol']) && $_SESSION['id_rol'] == 2): ?>
@@ -61,8 +65,13 @@ try {
             </a>
         </div>
 
-        <a href="logout.php" class="btn-salir">Cerrar Sesión</a>
-    </header>
+      <?php if (isset($_SESSION['nombre_usuario'])): ?>
+            <a href="logout.php" class="btn-salir" style="text-decoration: none;">Cerrar Sesión</a>
+        <?php else: ?>
+            <a href="login.php" class="carrito-contador" style="text-decoration: none; margin-left: 10px;">
+                🔑 Iniciar Sesión
+            </a>
+        <?php endif; ?>
 
     <main class="productos-grid">
         <?php 
