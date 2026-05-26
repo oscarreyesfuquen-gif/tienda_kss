@@ -2,35 +2,65 @@
 include("conexion.php");
 
 if (isset($_POST['registrar'])) {
-    $nombre = mysqli_real_escape_string($conexion, $_POST['nombre']);
-    $email = mysqli_real_escape_string($conexion, $_POST['email']);
+    // 1. SANITIZACIÓN: Limpiamos los datos antes de tocarlos
+    // trim() quita espacios vacíos accidentales al inicio y al final
+    $nombre = trim($_POST['nombre']);
+    $email = trim($_POST['email']);
     $password = $_POST['password'];
 
-    // 1. PRIMERO VERIFICAMOS SI EL EMAIL YA EXISTE
-    $buscarEmail = "SELECT * FROM usuario WHERE email = '$email'";
-    $resultadoBusqueda = mysqli_query($conexion, $buscarEmail);
+    // Eliminamos cualquier etiqueta HTML o scripts sospechosos del nombre
+    $nombre = filter_var($nombre, FILTER_SANITIZE_SPECIAL_CHARS);
+    
+    // Validamos y limpiamos que el correo sea estructuralmente un email válido
+    $email = filter_var($email, FILTER_VALIDATE_EMAIL);
 
-    if (mysqli_num_rows($resultadoBusqueda) > 0) {
-        // Si el correo ya está en la DB, avisamos y no insertamos
+    if (!$email) {
         echo "<script>
-                alert('Error: Este correo electrónico ya está registrado. Intenta con otro o inicia sesión.');
+                alert('Error: El correo electrónico ingresado no tiene un formato válido.');
                 window.history.back();
               </script>";
-    } else {
-        // 2. SI NO EXISTE, PROCEDEMOS AL REGISTRO NORMAL
-        $password_hash = password_hash($password, PASSWORD_DEFAULT);
+        exit();
+    }
 
-        $sql = "INSERT INTO usuario (tipo_doc, documento, nombre, apellidos, email, password_hash) 
-                VALUES ('CC', 'ID-".rand(100,999)."', '$nombre', '', '$email', '$password_hash')";
-
-        if (mysqli_query($conexion, $sql)) {
+    try {
+        // 2. VERIFICAR EMAIL EXISTENTE CON PDO (Consulta Preparada)
+        $stmt_buscar = $conexion->prepare("SELECT id_usuario FROM usuario WHERE email = :email LIMIT 1");
+        $stmt_buscar->bindParam(':email', $email, PDO::PARAM_STR);
+        $stmt_buscar->execute();
+        
+        // fetch() nos dice si encontró una fila
+        if ($stmt_buscar->fetch()) {
             echo "<script>
-                    alert('¡Usuario registrado con éxito!');
-                    window.location.href='login.php';
+                    alert('Error: Este correo electrónico ya está registrado. Intenta con otro o inicia sesión.');
+                    window.history.back();
                   </script>";
+            exit();
         } else {
-            echo "Error al registrar: " . mysqli_error($conexion);
+            // 3. REGISTRO SEGURO CON PDO
+            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+            $documento_aleatorio = "ID-" . rand(100, 999);
+
+            // Recuerda que añadimos 'id_rol' en el pilar anterior, por defecto será 1 (Cliente)
+            $sql = "INSERT INTO usuario (tipo_doc, documento, nombre, apellidos, email, password_hash, id_rol) 
+                    VALUES ('CC', :documento, :nombre, '', :email, :password_hash, 1)";
+
+            $stmt_insertar = $conexion->prepare($sql);
+            $stmt_insertar->bindParam(':documento', $documento_aleatorio, PDO::PARAM_STR);
+            $stmt_insertar->bindParam(':nombre', $nombre, PDO::PARAM_STR);
+            $stmt_insertar->bindParam(':email', $email, PDO::PARAM_STR);
+            $stmt_insertar->bindParam(':password_hash', $password_hash, PDO::PARAM_STR);
+
+            if ($stmt_insertar->execute()) {
+                echo "<script>
+                        alert('¡Usuario registrado con éxito!');
+                        window.location.href='login.php';
+                      </script>";
+                exit();
+            }
         }
+    } catch (PDOException $e) {
+        error_log("Error crítico en el registro: " . $e->getMessage());
+        echo "Lo sentimos, ocurrió un error interno al procesar tu registro.";
     }
 }
 ?>
@@ -47,9 +77,9 @@ if (isset($_POST['registrar'])) {
     <div class="flex-center">
         <div class="login-container">
             
-          <div class="logo-wrapper">
-<img src="logo.png.png" alt="Logo KSS" class="login-logo">
-</div>
+            <div class="logo-wrapper">
+                <img src="logo.png.png" alt="Logo KSS" class="login-logo">
+            </div>
 
             <h2>Crear Cuenta</h2>
             <p class="subtitulo">Únete a la comunidad KSS</p>
@@ -67,3 +97,4 @@ if (isset($_POST['registrar'])) {
         </div>
     </div>
 </body>
+</html>
