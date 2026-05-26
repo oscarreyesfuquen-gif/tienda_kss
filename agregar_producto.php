@@ -10,11 +10,21 @@ if (!isset($_SESSION['id_rol']) || $_SESSION['id_rol'] != 2) {
 
 $mensaje = "";
 
+// --- NUEVO: CONSULTAR LAS CATEGORÍAS DISPONIBLES PARA EL DESPLEGABLE ---
+try {
+    $stmt_cat = $conexion->query("SELECT id_categoria, nombre_categoria FROM categoria");
+    $categorias = $stmt_cat->fetchAll();
+} catch (PDOException $e) {
+    error_log("Error al cargar categorías: " . $e->getMessage());
+    $categorias = array();
+}
+
 // 2. PROCESAR EL FORMULARIO CUANDO SE DA CLIC EN GUARDAR
 if (isset($_POST['guardar_producto'])) {
     $nombre = $_POST['nombre_producto'];
     $descripcion = $_POST['descripcion'];
     $precio = $_POST['precio'];
+    $id_categoria = $_POST['id_categoria']; // <-- NUEVO: Capturamos la categoría elegida
     
     // Configuración por defecto si no suben foto
     $nombre_imagen_final = "logo.png.png"; 
@@ -24,32 +34,28 @@ if (isset($_POST['guardar_producto'])) {
         $nombre_original = $_FILES['foto_producto']['name'];
         $ruta_temporal = $_FILES['foto_producto']['tmp_name'];
         
-        // Extraemos la extensión del archivo (jpg, png, webp, etc.)
         $extension = pathinfo($nombre_original, PATHINFO_EXTENSION);
-        
-        // Creamos un nombre único para evitar que fotos con el mismo nombre se borren entre sí
         $nombre_imagen_final = "prod_" . time() . "." . $extension;
-        
-        // Destino físico en tu carpeta de XAMPP
         $ruta_destino = $nombre_imagen_final; 
 
-        // Movemos el archivo temporal a tu carpeta real del proyecto
         if (!move_uploaded_file($ruta_temporal, $ruta_destino)) {
-            $nombre_imagen_final = "logo.png.png"; // Si falla la subida, se le asigna el logo por defecto
+            $nombre_imagen_final = "logo.png.png";
             $mensaje = "⚠️ Advertencia: No se pudo guardar la imagen en el servidor, usando logo predeterminado.";
         }
     }
 
-    // 4. INSERCIÓN EN LA BASE DE DATOS USANDO PDO (BLINDADO)
+    // 4. INSERCIÓN EN LA BASE DE DATOS USANDO PDO (INCLUYENDO ID_CATEGORIA)
     try {
-        $sql = "INSERT INTO producto (nombre_producto, descripcion, precio, image) 
-                VALUES (:nombre, :descripcion, :precio, :imagen)";
+        // Añadimos id_categoria a la consulta SQL para cumplir con la llave foránea
+        $sql = "INSERT INTO producto (nombre_producto, descripcion, precio, image, id_categoria) 
+                VALUES (:nombre, :descripcion, :precio, :imagen, :id_categoria)";
         
         $stmt = $conexion->prepare($sql);
         $stmt->bindParam(':nombre', $nombre, PDO::PARAM_STR);
         $stmt->bindParam(':descripcion', $descripcion, PDO::PARAM_STR);
         $stmt->bindParam(':precio', $precio, PDO::PARAM_INT);
         $stmt->bindParam(':imagen', $nombre_imagen_final, PDO::PARAM_STR);
+        $stmt->bindParam(':id_categoria', $id_categoria, PDO::PARAM_INT); // <-- NUEVO: Vinculamos la categoría
         
         if ($stmt->execute()) {
             echo "<script>
@@ -60,7 +66,7 @@ if (isset($_POST['guardar_producto'])) {
         }
     } catch (PDOException $e) {
         error_log("Error al insertar producto: " . $e->getMessage());
-        $mensaje = "❌ Error crítico: No se pudo guardar el producto en la base de datos.";
+        $mensaje = "❌ Error crítico MySQL: " . $e->getMessage();
     }
 }
 ?>
@@ -95,8 +101,20 @@ if (isset($_POST['guardar_producto'])) {
                 </div>
 
                 <div class="input-group">
+                    <label>Categoría del Producto:</label>
+                    <select name="id_categoria" required style="width: 100%; background: #222; color: #fff; border: 1px solid #d4af37; border-radius: 5px; padding: 10px;">
+                        <option value="">-- Seleccione una Categoría --</option>
+                        <?php foreach ($categorias as $cat): ?>
+                            <option value="<?php echo $cat['id_categoria']; ?>">
+                                <?php echo htmlspecialchars($cat['nombre_categoria']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="input-group">
                     <label>Descripción:</label>
-                    <textarea name="descripcion" placeholder="Escribe las características del producto..." rows="4" style="width: 100%; background: #222; color: #fff; border: 1px solid #d4af37; border-radius: 5px; padding: 10px; box-sizing: border-radius;" required></textarea>
+                    <textarea name="descripcion" placeholder="Escribe las características del producto..." rows="4" style="width: 100%; background: #222; color: #fff; border: 1px solid #d4af37; border-radius: 5px; padding: 10px; box-sizing: border-box;" required></textarea>
                 </div>
 
                 <div class="input-group">

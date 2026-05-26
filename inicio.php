@@ -22,11 +22,11 @@ if (isset($_POST['agregar_carrito'])) {
 // 3. CONSULTA DE PRODUCTOS CON PDO
 try {
     $query = "SELECT * FROM producto";
-    $stmt = $conexion->query($query); // PDO ejecuta la consulta directamente
-    $productos = $stmt->fetchAll();   // Traemos todos los productos de un solo golpe
+    $stmt = $conexion->query($query); 
+    $productos = $stmt->fetchAll();   
 } catch (PDOException $e) {
     error_log("Error al consultar productos: " . $e->getMessage());
-    $productos = array(); // Evitamos que el HTML falle inicializando un array vacío
+    $productos = array(); 
 }
 ?>
 
@@ -47,7 +47,13 @@ try {
         <h1>Bienvenido, <span class="user-name"><?php echo htmlspecialchars($_SESSION['nombre_usuario']); ?></span> 👋</h1>
 
         <div class="carrito-wrapper">
-            <a href="ver_carrito.php" class="carrito-contador">
+            <?php if (isset($_SESSION['id_rol']) && $_SESSION['id_rol'] == 2): ?>
+                <a href="admin_productos.php" class="btn-carrito" style="background: #d4af37; color: #000; text-decoration: none; font-weight: bold; padding: 8px 15px; margin-right: 15px; border-radius: 5px;">
+                    👑 Panel Admin
+                </a>
+            <?php endif; ?>
+
+            <a href="ver_carrito.php" class="carrito-contador" style="text-decoration: none;">
                 🛒 Productos en carrito: 
                 <strong>
                     <?php echo isset($_SESSION['carrito']) ? count($_SESSION['carrito']) : 0; ?>
@@ -60,7 +66,6 @@ try {
 
     <main class="productos-grid">
         <?php 
-        // Cambiamos el 'while' antiguo por un 'foreach' moderno de PDO
         if (!empty($productos)) {
             foreach ($productos as $row) { 
         ?>
@@ -99,11 +104,3 @@ try {
 
 </body>
 </html>
-
-<script>
-    document.querySelectorAll('.btn-carrito').forEach(boton => {
-        boton.addEventListener('click', () => {
-            alert('¡Excelente elección! El producto se ha añadido a tu carrito de The Kings.');
-        });
-    });
-</script>
